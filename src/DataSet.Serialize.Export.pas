@@ -271,6 +271,7 @@ var
   LDataSetDetails: TList<TDataSet>;
   LField: TField;
   LByteValue: Byte;
+  Value:string;
 begin
   Result := TJSONObject.Create;
   if not Assigned(ADataSet) or (not TDataSetSerializeConfig.GetInstance.Export.ExportEmptyDataSet and ADataSet.IsEmpty) then
@@ -310,7 +311,13 @@ begin
       {$IF NOT DEFINED(FPC)}TFieldType.ftSingle, TFieldType.ftExtended, {$ENDIF}TFieldType.ftFloat:
         begin
           if TDataSetSerializeConfig.GetInstance.Export.FormatFloat.Trim.IsEmpty then
-            Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}TJSONExtFloatNumber.Create(LField.AsFloat){$ELSE}TJSONNumber.Create(LField.AsFloat){$ENDIF})
+		  begin
+		     Value:=FloatToStr(LField.AsFloat) ;
+			 if pos('.',Value)>0 then
+				Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}TJSONExtFloatNumber.Create(LField.AsFloat){$ELSE}TJSONNumber.Create(LField.AsFloat){$ENDIF})
+			 else 
+				Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}TJSONExtFloatNumber.Create(LField.AsFloat){$ELSE}TJSONNumber.Create(StrToInt(Value)){$ENDIF});
+		  end
           else
             Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, TJSONString.Create(FormatFloat(TDataSetSerializeConfig.GetInstance.Export.FormatFloat, LField.AsFloat)));
         end;
@@ -371,7 +378,13 @@ begin
         if TDataSetSerializeConfig.GetInstance.Export.ExportBCDAsFloat then
           Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}TJSONExtFloatNumber.Create(BcdToDouble(LField.AsBcd)){$ELSE}TJSONNumber.Create(BcdToDouble(LField.AsBcd)){$ENDIF})
         else
-          Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}BcdToDouble(LField.AsBcd){$ELSE}TJSONNumber.Create(BcdToDouble(LField.AsBcd)){$ENDIF});
+        begin
+          Value:=BcdToStr(LField.AsBcd) ;
+          if pos('.',Value)>0 then
+			Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}BcdToDouble(LField.AsBcd){$ELSE}BcdToDouble(LField.AsBcd){$ENDIF})
+          else
+             Result.{$IF DEFINED(FPC)}Add{$ELSE}AddPair{$ENDIF}(LKey, {$IF DEFINED(FPC)}BcdToDouble(LField.AsBcd){$ELSE}BcdToInt64(LField.AsBcd){$ENDIF});
+        end;
       {$IF NOT DEFINED(FPC)}
       TFieldType.ftDataSet:
         begin
