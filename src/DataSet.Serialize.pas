@@ -152,6 +152,17 @@ type
     /// </remarks>
     procedure LoadFromJSON(const AJSONObject: TJSONObject; const AOwns: Boolean = True); overload;
     /// <summary>
+    ///   Loads the DataSet with data from a JSON Array.
+    /// </summary>
+    /// <param name="AJSONArray">
+    ///   Refers to JSON that you want to load.
+    /// </param>
+    /// <remarks>
+    ///   Only the keys that make up the DataSet field list will be loaded. The JSON keys must have the same name as the
+    ///   DataSet fields. It's not case-sensitive.
+    /// </remarks>
+    procedure LoadDataFromJSON(const AJSONArray: TJSONArray); overload;
+    /// <summary>
     ///   Loads the DataSet with data from a JSON object.
     /// </summary>
     /// <param name="AJSONObject">
@@ -361,6 +372,43 @@ end;
 procedure TDataSetSerializeHelper.LoadFromJSON(const AJSONObject: TJSONObject; const AOwns: Boolean = True);
 begin
   LoadFromJSON(AJSONObject, EmptyStr, AOwns);
+end;
+procedure TDataSetSerializeHelper.LoadDataFromJSON(const AJSONArray: TJSONArray);
+var
+  JSONObject:TJsonObject;
+  Pair:TJsonPair;
+  FieldName:String;
+  I,J:integer;
+  Value:TJsonValue;
+begin
+  if not self.Active then
+  begin
+    self.Active:=true;
+    self.First;
+    while not self.Eof do
+       self.Delete;
+  end;
+  self.Close;
+  self.Open;
+  self.Append;
+  for I := 0 to AJSONArray.Count-1 do
+    begin
+    JSONObject:= AJSONArray.Items[I] as TJsonObject;
+      for J := 0 to JSONObject.Count - 1 do
+      begin
+        Pair := JSONObject.Pairs[J];
+        FieldName := Pair.JsonString.Value;
+        Value := Pair.JsonValue;
+        // 根据字段类型赋值
+        case self.FieldByName(FieldName).DataType of
+          ftInteger: self.FieldByName(FieldName).AsInteger := Value.GetValue<Integer>;
+          ftFloat: self.FieldByName(FieldName).AsFloat := Value.GetValue<Double>;
+          ftBoolean: self.FieldByName(FieldName).AsBoolean := Value.GetValue<Boolean>;
+          else
+            self.FieldByName(FieldName).AsWideString := Value.Value; // 处理字符串和未知类型
+        end; end;
+end;
+self.Post;
 end;
 
 procedure TDataSetSerializeHelper.LoadFromJSON(const AJSONObject: TJSONObject; const ARootElement: string; const AOwns: Boolean = True);
