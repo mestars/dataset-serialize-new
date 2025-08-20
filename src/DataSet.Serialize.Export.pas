@@ -201,7 +201,7 @@ begin
               else
                 Result.Add(FormatFloat(TDataSetSerializeConfig.GetInstance.Export.FormatFloat, ADataSet.Fields[0].AsFloat));
             end;
-          TFieldType.ftDateTime, TFieldType.ftTimeStamp:
+          TFieldType.ftDateTime, TFieldType.ftTimeStamp,TFieldType.ftTimeStampOffset:
             begin
               if TDataSetSerializeConfig.GetInstance.DateIsFloatingPoint then
                 Result.Add(ADataSet.Fields[0].AsDateTime)
